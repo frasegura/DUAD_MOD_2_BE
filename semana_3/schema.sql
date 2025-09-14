@@ -39,7 +39,6 @@ CREATE TABLE invoice(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	invoice_number INTEGER DEFAULT 0,
 	purchase_date DATE,
-	client_email VARCHAR(25),
 	total_amount INTEGER DEFAULT 0,
 	cx_phone_number VARCHAR(20),
 	employee_code VARCHAR(20),
