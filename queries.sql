@@ -19,9 +19,18 @@ SELECT *
 	WHERE id = 3
 
 
+
 -- 4. Obtenga todas las compras agrupadas por producto, donde se muestre el total comprado entre todas las compras.
 
-FALTA
+SELECT 
+    product_id,
+    SUM(quantity) AS total_unidades,
+    SUM(subtotal) AS total_vendido
+FROM invoice_detail
+GROUP BY product_id;
+
+
+
 
 
 -- 5. Obtenga todas las facturas realizadas por el mismo comprador
