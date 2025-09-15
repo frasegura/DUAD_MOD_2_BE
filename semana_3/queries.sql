@@ -30,9 +30,6 @@ FROM invoice_detail
 GROUP BY product_id;
 
 
-
-
-
 -- 5. Obtenga todas las facturas realizadas por el mismo comprador
 
 SELECT * FROM invoice WHERE user_id = 2
