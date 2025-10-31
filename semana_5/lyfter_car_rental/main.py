@@ -39,7 +39,18 @@ rent_repo = RentRepository(db_manager)
 #car_repo.update_car_status(1,True)
 
 #e. New rent with the user and car data
-result_rent = rent_repo.create_rent(1,50,"ongoing")  #(user_id,car_id,rental_status)
+#result_rent = rent_repo.create_rent(1,50,"ongoing")  #(user_id,car_id,rental_status)
 
+#f. rent completed, changing the car status as available and completing the rent status
+
+#rent_repo.confirm_return(3)
+
+#g. Disable a car from rent
+
+#rent_repo.disable_car_rental(1)
+
+#h. script for rented cars and for available cars
+# print("Available cars :",car_repo.get_available_cars())
+# print("Rented cars", car_repo.get_rented_cars())
 
 db_manager.close_connection()

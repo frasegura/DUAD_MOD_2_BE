@@ -11,11 +11,11 @@ class RentRepository:
             "rental_status": rent_record[4]
         }
     
-    #CRUD
+    #Basic tests for DB
 
     def get_rental_by_id(self,rental_id):
         try:
-            results  = self.db_manager.execute_query("SELECT rental_id,user_id, car_id, rental_date, rental_status FROM lyfter_car_rental.rentals WHERE id = %s;",(rental_id))
+            results  = self.db_manager.execute_query("SELECT rental_id,user_id, car_id, rental_date, rental_status FROM lyfter_car_rental.rentals WHERE rental_id = %s;",(rental_id,))
             formatted_results = [self._format_rent(result) for result in results]
             if not results:
                 print(f"No rental found with the id :{rental_id}")
@@ -31,14 +31,36 @@ class RentRepository:
                 return False
             
             if rental["rental_status"] == "completed":
-                print(f"Reantal {rental_id} is already completed")
+                print(f"Rental {rental_id} is already completed")
                 return False
             
             update_rental_query = self.db_manager.execute_query("UPDATE lyfter_car_rental.rentals SET rental_status = 'completed' WHERE rental_id = %s;" , (rental_id,))
-            update_car_query = self.db_manager.execute_query("UPDATE lyfter_car_renta.cars SET status = TRUE WHERE car_id = %s; ", (rental["car_id"],))
+            update_car_query = self.db_manager.execute_query("UPDATE lyfter_car_rental.cars SET is_available = TRUE WHERE car_id = %s; ", (rental["car_id"],))
 
             print(f"Rental {rental_id} marked as completed and car {rental['car_id']} set to available.")
             return True
 
         except Exception as e:
             print("An error has ocurred during the confirmation: ", e)
+            return False
+
+    def disable_car_rental(self, rental_id):
+
+        try:
+            rental = self.get_rental_by_id(rental_id)
+            if not rental:
+                print(f"There's no rental for the selected ID : {rental_id} ")
+                return False
+            
+            if rental["rental_status"] == "disabled":
+                print(f"The rental for the car {rental['car_id']} is already disabled")
+                return False
+            
+            update_rental_query = self.db_manager.execute_query("UPDATE lyfter_car_rental.rentals SET rental_status = 'disabled' WHERE rental_id = %s;", (rental_id,))
+            update_car_query = self.db_manager.execute_query("UPDATE lyfter_car_rental.cars SET  is_available = False WHERE car_id=%s;", (rental['car_id'],))
+
+            print(f"The car {rental['car_id']} was disabled to rent")
+            return True 
+        except Exception as e:
+            print("Disabling failed", e)
+            return False

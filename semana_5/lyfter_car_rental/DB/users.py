@@ -13,7 +13,7 @@ class  UserRepository:
             "account_status": user_record[6]
         }
     
-    #CRUD
+    #Basic tests for DB
 
     def create(self,full_name,email,username, password,birth_date,account_status):
         try:
