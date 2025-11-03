@@ -13,6 +13,37 @@ class RentRepository:
     
     #Basic tests for DB
 
+    def get_rentals(self, filters=None):
+        try:
+            base_query = "SELECT * FROM lyfter_car_rental.rentals"
+            params = []
+
+            if filters:
+                conditions = []
+                for key,value in filters.items():
+                    conditions.append(f"{key} = %s" )
+                    params.append(value)
+                base_query += " WHERE " + " AND ".join(conditions)
+
+            results = self.db_manager.execute_query(base_query, tuple(params))
+            return [self._format_rent(result) for result in results]
+        except Exception as e:
+            print("Error filtering data!!", e)
+            return False
+
+
+    def create_rental(self,rental_data):
+        try:
+            self.db_manager.execute_query("INSERT INTO lyfter_car_rental.rentals (user_id,car_id,rental_status) VALUES (%s,%s,%s);", (
+                rental_data["user_id"],
+                rental_data["car_id"],
+                rental_data["rental_status"]
+            ))
+            print("Rental inserted succesfully")
+            return True
+        except Exception as e:
+            print("An error has ocurre while creating a rental", e)
+
     def get_rental_by_id(self,rental_id):
         try:
             results  = self.db_manager.execute_query("SELECT rental_id,user_id, car_id, rental_date, rental_status FROM lyfter_car_rental.rentals WHERE rental_id = %s;",(rental_id,))
@@ -63,4 +94,17 @@ class RentRepository:
             return True 
         except Exception as e:
             print("Disabling failed", e)
+            return False
+        
+    def update_rental_status(self,rental_id,new_status):
+        try:
+            rental = self.get_rental_by_id(rental_id)
+            if not rental:
+                print("No rental found with the requested id")
+                return False
+            update_query_rental = self.db_manager.execute_query("UPDATE lyfter_car_rental.rentals SET rental_status = %s WHERE rental_id = %s", (new_status,rental_id,))
+            print(f"The {rental_id} was successfully updated to {new_status}")
+            return True
+        except Exception as e:
+            print("An error ocurred while updating the rental status")
             return False

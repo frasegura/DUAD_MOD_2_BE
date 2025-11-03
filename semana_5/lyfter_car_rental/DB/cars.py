@@ -8,14 +8,19 @@ class CarRepository:
             "brand":car_record[1],
             "model":car_record[2],
             "year":car_record[3],
-            "status":car_record[4]
+            "is_available":car_record[4]
         }
 
     #Basic tests for DB
 
-    def  create(self,brand,model,year,is_available):
+    def  create(self, car_data):
         try:
-            self.db_manager.execute_query("INSERT INTO lyfter_car_rental.cars(brand,model,year,is_available) VALUES(%s,%s,%s,%s)" , (brand,model,year,is_available))
+            self.db_manager.execute_query("INSERT INTO lyfter_car_rental.cars(brand,model,year,is_available) VALUES(%s,%s,%s,%s)" , (
+                car_data["brand"],
+                car_data["model"],
+                car_data["year"],
+                car_data["is_available"]
+            ))
             print("Car inserted succesfully")
             return True
         except Exception as e:
@@ -56,3 +61,20 @@ class CarRepository:
         except Exception as e:
             print("An error ocurred while all the available cars ",e )
             return []
+
+    def get_cars(self, filters=None):
+        try:
+            base_query = "SELECT car_id, brand, model, year, is_available FROM lyfter_car_rental.cars"
+            params = []
+
+            if filters:
+                conditions = []
+                for key,value in filters.items():
+                    conditions.append(f"{key} = %s" )
+                    params.append(value)
+                base_query += " WHERE " + " AND ".join(conditions)
+
+            results = self.db_manager.execute_query(base_query, tuple(params))
+            return [self._format_cars(result) for result in results]
+        except Exception as e:
+            print("Error filtering data!!", e)

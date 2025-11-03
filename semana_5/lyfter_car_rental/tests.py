@@ -14,6 +14,12 @@ users_repo = UserRepository(db_manager)
 car_repo = CarRepository(db_manager)
 rent_repo = RentRepository(db_manager)
 
+
+print(users_repo.get_users())
+#print(car_repo.get_cars())
+
+db_manager.close_connection()
+
 #a. Add a new user 
 # result = users_repo.create(
 #     full_name="Francisco Segura",
@@ -53,4 +59,3 @@ rent_repo = RentRepository(db_manager)
 # print("Available cars :",car_repo.get_available_cars())
 # print("Rented cars", car_repo.get_rented_cars())
 
-db_manager.close_connection()
