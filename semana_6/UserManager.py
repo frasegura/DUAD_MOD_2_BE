@@ -2,14 +2,14 @@ from sqlalchemy import insert, select,update, delete
 from database_setup import engine, users_table
 
 class UserManager:
-    def __init__(self, engine):
+    def __init__(self):
         self.engine = engine
 
     #Create User
     def create_user(self, name):
         stmt = insert(users_table).values(name=name)
         with engine.connect() as conn:
-            result = conn.execute(stmt)
+            conn.execute(stmt)
             conn.commit()
 
     #Update user
@@ -20,7 +20,7 @@ class UserManager:
             .values(name=new_name)
         )
         with engine.connect() as conn:
-            result = conn.execute(stmt)
+            conn.execute(stmt)
             conn.commit()
 
     #Delete user
@@ -30,7 +30,7 @@ class UserManager:
             .where(users_table.c.id == user_id)
         )
         with engine.connect() as conn:
-            result = conn.execute(stmt)
+            conn.execute(stmt)
             conn.commit()
 
     #Get all users 

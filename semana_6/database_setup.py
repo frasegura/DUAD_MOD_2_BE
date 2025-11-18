@@ -29,13 +29,13 @@ cars_table = Table(
     Column("model",String(50)),
 
     #FK
-    Column("users_id",Integer, ForeignKey("users.id"), nullable=True)
+    Column("user_id",Integer, ForeignKey("users.id"), nullable=True)
 )
 
 
 #Create connection
-DB_URI = 'postgres://postgres:postgres@localhost:5432/postgres'
-engine = create_engine(DB_URI, echo= True)
+DB_URI = 'postgresql://postgres:postgres@localhost:5432/postgres'
+engine = create_engine(DB_URI, echo= False)
 
 try:
     connection = engine.connect()
