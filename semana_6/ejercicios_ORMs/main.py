@@ -1,6 +1,6 @@
-from AddressManager import AddressManager
-from CarManager import CarManager
-from UserManager import UserManager
+from semana_6.ejercicios_ORMs.AddressManager import AddressManager
+from semana_6.ejercicios_ORMs.CarManager import CarManager
+from semana_6.ejercicios_ORMs.UserManager import UserManager
 
 user_mngr = UserManager()
 car_mngr = CarManager()
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     # address_mngr.create_address("Calle Montes", 3)
 
     # #Get addresses
-    # print(address_mngr.get_all_address())
+    print(address_mngr.get_all_address())
 
     # #Update address
 
@@ -57,10 +57,10 @@ if __name__ == "__main__":
 
     # #Create Cars
     # car_mngr.create_car("Toyota Yaris")
-    # car_mngr.create_car("Honda CRV" , user_id= 2)
+    # car_mngr.create_car("Honda CRV" , user_id= 1)
 
     # #Get Cars
-    # print(car_mngr.get_all_cars())
+    print(car_mngr.get_all_cars())
 
     # #Update Cars
 

@@ -1,5 +1,5 @@
 from sqlalchemy import insert, update, delete,select
-from database_setup import engine , addresses_table
+from semana_6.ejercicios_ORMs.database_setup import engine , addresses_table
 
 class AddressManager():
     def __init__(self):

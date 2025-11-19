@@ -1,5 +1,5 @@
 from sqlalchemy import insert, select,update, delete
-from database_setup import engine, users_table
+from semana_6.ejercicios_ORMs.database_setup import engine, users_table
 
 class UserManager:
     def __init__(self):

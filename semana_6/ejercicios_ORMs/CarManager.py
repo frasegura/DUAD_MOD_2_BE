@@ -1,5 +1,5 @@
 from sqlalchemy import insert, update,select,delete
-from database_setup import engine, cars_table
+from semana_6.ejercicios_ORMs.database_setup import engine, cars_table
 
 class CarManager:
     def __init__(self):
