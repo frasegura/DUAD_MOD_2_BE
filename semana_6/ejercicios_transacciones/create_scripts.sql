@@ -8,6 +8,7 @@ create table if not exists transactions_ex.invoice (
    invoice_id   serial primary key,
    invoice_date date not null,
    user_id      int not null,
+   status       varchar(20) not null default 'ACTIVA',
    foreign key ( user_id )
       references transactions_ex.users ( user_id )
 )
@@ -16,7 +17,8 @@ create table if not exists transactions_ex.invoice (
 create table if not exists transactions_ex.products (
    product_id   serial primary key,
    product_name varchar(50),
-   price        int not null
+   price        int not null,
+   stock        int not null
 )
 
 create table if not exists transactions_ex.invoice_detail (

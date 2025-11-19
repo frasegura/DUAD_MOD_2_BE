@@ -1,3 +1,6 @@
+
+DO $$
+
 BEGIN TRANSACTION
 --a)User validation
 
@@ -24,3 +27,5 @@ BEGIN TRANSACTION
 	SAVEPOINT invoice_created;
 	
 COMMIT;
+
+END $$ LANGUAGE plpgsql;
