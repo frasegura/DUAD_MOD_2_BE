@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData
-from sqlalchemy import Table, Column,Integer,String
-from sqlalchemy import insert, select
+from sqlalchemy import Table, Column,Integer,String, Date,Float, ForeignKey
+from sqlalchemy import insert, select,update,delete
+import datetime
 
 metadata_obj = MetaData()
 
@@ -9,9 +10,38 @@ users_table = Table(
     "users",
     metadata_obj,
     Column("id",Integer, primary_key = True),
-    Column("username",String(30)),
-    Column("password",String(30)),
-    Column("type",String(30))
+    Column("username",String(30),unique=True),
+    Column("password",String(200)),
+    Column("role",String(30), default="user")
+)
+
+products_table = Table(
+    "products",
+    metadata_obj,
+    Column("id", Integer, primary_key = True),
+    Column("name",String(30)),
+    Column("price", Float),
+    Column("entry_date",Date),
+    Column("quantity", Integer)
+)
+
+invoice_table = Table(
+    "invoice",
+    metadata_obj,
+    Column("id", Integer, primary_key=True),
+    Column("user_id", Integer,ForeignKey("users.id")),
+    Column("date", Date),
+    Column("total_amount", Float)
+)
+
+invoice_detail_table = Table(
+    "invoice_detail",
+    metadata_obj,
+    Column("id",Integer, primary_key=True),
+    Column("invoice_id",Integer, ForeignKey("invoice.id")),
+    Column("product_id",Integer, ForeignKey("product.id")),
+    Column("quantity",Integer),
+    Column("subtotal",Float)
 )
 
 class DB_Manager:
@@ -19,14 +49,17 @@ class DB_Manager:
         self.engine =create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
         metadata_obj.create_all(self.engine)
 
-    def insert_user(self,username,password,type):
-        stmt = insert(users_table).returning(users_table.c.id).values(username=username,password=password,type = type)
+
+    #****USERS
+
+    def insert_user(self,username,password, role = "user"):
+        stmt = insert(users_table).returning(users_table.c.id).values(username=username,password=password, role=role)
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
         return result.all()[0]  #explicacion en Notion
     
-    def get_user(self,username,password,type):
+    def get_user(self,username,password):
         stmt = select(users_table).where(users_table.c.username==username).where(users_table.c.password==password)
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
@@ -46,6 +79,121 @@ class DB_Manager:
                 return None
             else:
                 return users[0]
+            
+
+    #****PRODUCTS
+    #Ingresar productos
+    def insert_products(self,name,price,entry_date,quantity):
+        stmt= insert(products_table).returning(products_table.c.id).values(name=name,price=price,entry_date=entry_date,quantity=quantity)
+        with self.engine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+        return result.all()[0]
+    
+    #Obtener todos los productos
+    def get_all_products(self):
+        stmt = select(products_table)
+        with self.engine.connect() as conn:
+            result =conn.execute(stmt)
+            products = result.all()
+
+            if(len(products)==0):
+                return None
+            else:
+                return products
+            
+    #Obtener productos por id
+    def get_products_by_id(self,product_id):
+        stmt = select(products_table).where(products_table.c.id==product_id)
+        with self.engine.connect() as conn :
+            result = conn.execute(stmt)
+            products = result.all()
+            if(len(products)==0):
+                return None
+            else:
+                return products[0]
+
+    #Actualizar productos
+    def update_products(self,product_id,name,price,entry_date,quantity):
+        stmt = (
+            update(products_table).where(products_table.c.id==product_id).values(name=name,price=price,entry_date=entry_date,quantity=quantity)
+        )
+        with self.engine.connect as conn:
+            conn.execute(stmt)
+            conn.commit()
+        return True
+    
+    #Borrar productos
+    def delete_products(self,product_id):
+        stmt = delete(products_table).where(products_table.c.id==product_id)
+        with self.engine.connect() as conn:
+            conn.execute(stmt)
+            conn.commit()
+        return True
+
+    #****INVOICES
+
+    #crear factura
+    def create_invoice(self,user_id,items):
+        with self.engine.connect() as conn:
+            total_amount = 0
+            inv_details = []
+
+            #validar que exista el prod
+            for item in items:
+                prod_id = item["product_id"]
+                qty = item["quantity"]
+
+            prod_stmt = select(products_table).where(products_table.c.id==prod_id)
+            product = conn.execute(prod_stmt)
+
+            if product == None:
+                raise Exception("The product does not exists")
+            elif product.quantity < qty:
+                raise Exception("Product not available")
+
+            #Calcular el total
+            subtotal = qty * product.price
+            total += subtotal
+
+            inv_details.append({
+                "product_id " : prod_id,
+                "quantity": qty,
+                "subtotal ": subtotal
+            })
+            
+            #Crear la factura
+            invoice_stmt = insert(invoice_table).returning(invoice_table.c.id).values(user_id=user_id, date = datetime.now(),total_amount=total)
+            invoice = conn.execute(invoice_stmt)
+            invoice_id = invoice.all()[0]
+
+            #insertar detalles de factura y actualizar stock
+
+            for detail in inv_details:
+                details_stmt = insert(invoice_detail_table).values(invoice_id = invoice_id,product_id = detail["product_id"],quantity= detail["quantity"],subtotal = detail["subtotal"])
+                conn.execute(details_stmt)
+
+                stock_stmt = update(products_table).where(products_table.c.id == detail["product_id"]).values(quantity = products_table.c.quantity-detail["quantity"])
+                conn.execute(stock_stmt)
+
+            conn.commit()
+            return invoice_id
+
+    #****INVOICE QUERIES
+    
+    def get_invoice_by_user(self,user_id):
+        stmt = select(invoice_table).where(invoice_table.c.user_id == user_id)
+        with self.engine.connect() as conn:
+            result = conn.execute(stmt)
+            return result.all()
+
+    def get_invoice_details(self, invoice_id):
+        stmt = select(invoice_detail_table).where(invoice_detail_table.c.invoice_id == invoice_id)
+        with self.engine.connect() as conn:
+            result = conn.execute(stmt)
+            return result.all()
+
+
 
 
 
