@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import MetaData
 from sqlalchemy import Table, Column,Integer,String, Date,Float, ForeignKey
 from sqlalchemy import insert, select,update,delete
-import datetime
+from datetime import datetime
 
 metadata_obj = MetaData()
 
@@ -39,7 +39,7 @@ invoice_detail_table = Table(
     metadata_obj,
     Column("id",Integer, primary_key=True),
     Column("invoice_id",Integer, ForeignKey("invoice.id")),
-    Column("product_id",Integer, ForeignKey("product.id")),
+    Column("product_id",Integer, ForeignKey("products.id")),
     Column("quantity",Integer),
     Column("subtotal",Float)
 )
@@ -57,10 +57,10 @@ class DB_Manager:
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
-        return result.all()[0]  #explicacion en Notion
+        return result.all()[0]
     
-    def get_user(self,username,password):
-        stmt = select(users_table).where(users_table.c.username==username).where(users_table.c.password==password)
+    def get_user(self,username,password,role):
+        stmt = select(users_table).where(users_table.c.username==username).where(users_table.c.password==password).where(users_table.c.role==role)
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             users = result.all()
@@ -88,7 +88,7 @@ class DB_Manager:
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
-        return result.all()[0]
+            return result.scalar()
     
     #Obtener todos los productos
     def get_all_products(self):
@@ -136,7 +136,7 @@ class DB_Manager:
     #crear factura
     def create_invoice(self,user_id,items):
         with self.engine.connect() as conn:
-            total_amount = 0
+            total = 0
             inv_details = []
 
             #validar que exista el prod
@@ -144,30 +144,26 @@ class DB_Manager:
                 prod_id = item["product_id"]
                 qty = item["quantity"]
 
-            prod_stmt = select(products_table).where(products_table.c.id==prod_id)
-            product = conn.execute(prod_stmt)
+                prod_stmt = select(products_table).where(products_table.c.id==prod_id)
+                product = conn.execute(prod_stmt).first()
 
             if product == None:
                 raise Exception("The product does not exists")
             elif product.quantity < qty:
                 raise Exception("Product not available")
 
-            #Calcular el total
             subtotal = qty * product.price
             total += subtotal
 
             inv_details.append({
-                "product_id " : prod_id,
+                "product_id" : prod_id,
                 "quantity": qty,
-                "subtotal ": subtotal
+                "subtotal": subtotal
             })
             
-            #Crear la factura
             invoice_stmt = insert(invoice_table).returning(invoice_table.c.id).values(user_id=user_id, date = datetime.now(),total_amount=total)
             invoice = conn.execute(invoice_stmt)
-            invoice_id = invoice.all()[0]
-
-            #insertar detalles de factura y actualizar stock
+            invoice_id = invoice.scalar()
 
             for detail in inv_details:
                 details_stmt = insert(invoice_detail_table).values(invoice_id = invoice_id,product_id = detail["product_id"],quantity= detail["quantity"],subtotal = detail["subtotal"])
@@ -192,7 +188,14 @@ class DB_Manager:
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             return result.all()
-
+        
+    def get_invoice_by_id(self, invoice_id):
+        stmt = select(invoice_table).where(invoice_table.c.id == invoice_id)
+        with self.engine.connect as conn:
+            return conn.execute(stmt).first()
+        
+    
+    #
 
 
 
