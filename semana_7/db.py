@@ -118,7 +118,7 @@ class DB_Manager:
         stmt = (
             update(products_table).where(products_table.c.id==product_id).values(name=name,price=price,entry_date=entry_date,quantity=quantity)
         )
-        with self.engine.connect as conn:
+        with self.engine.connect() as conn:
             conn.execute(stmt)
             conn.commit()
         return True

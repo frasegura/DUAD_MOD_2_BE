@@ -227,5 +227,3 @@ if __name__ == "__main__":
 
 #token admin: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTR9.v--HgrBSfeiQ7-NPpwdYK47ggApd3N9jGRg5H5lTv5g"
 #token user: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTB9._vRUJDS_3-Zq4FZaZQ1csG2UlpgSb8d8SIcmsVby-BA"
-
-# FALTA PROBAR ENDPOINTS DE UPDATE , DELETE Y GET PRODUCT BY ID 
