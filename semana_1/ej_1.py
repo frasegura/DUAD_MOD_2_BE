@@ -5,7 +5,7 @@
 #     - `Descripción`
 #     - `Estado` (Por Hacer, En Progreso o Completada)
 # - El API debe tener endpoints para:
-#     1. Obtener `tareas`.
+#     1. Obtener `tareas`.from
 #         1. Esta debe tener un query parameter **opcional** para filtrarlas por `Estado`.
 #     2. Crear `tareas`.
 #     3. Editar `tareas`.
@@ -19,7 +19,7 @@
 #     4. No se puedan agregar `tareas` sin estado.
 #     5. No se puedan agregar `tareas` con un estado invalido.
 import json
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify # pyright: ignore[reportMissingImports]
 import os 
 
 app = Flask(__name__)
