@@ -123,6 +123,7 @@ class DB_Manager:
             conn.commit()
         return True
     
+    
     #Borrar productos
     def delete_products(self,product_id):
         stmt = delete(products_table).where(products_table.c.id==product_id)
