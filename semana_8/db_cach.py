@@ -35,6 +35,20 @@ class DB_Manager():
             result = conn.execute(stmt)
             user = result.first()
             return user
+        
+    def get_user_by_id(self,user_id):
+        stmt = select(users_table).where(users_table.c.id == user_id)
+        with self.engine.connect() as conn:
+            result = conn.execute(stmt)
+            user = result.all()
+            if(len(user)==0):
+                return None
+            else:
+                return user
+            
+
+
+
             
             
 

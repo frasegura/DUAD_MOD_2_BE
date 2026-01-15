@@ -1,9 +1,12 @@
 from flask import Flask, request, jsonify, Response
 from db_cach import DB_Manager
+from jwt_manager_cach  import JWT_Manager
 
 
 
 db_manager = DB_Manager()
+jwt_manager = DB_Manager()
+
 
 app = Flask("user-service")
 
@@ -38,7 +41,8 @@ def user_register():
         result = db_manager.insert_user(user_name,password,role)
 
         #AGREGAR TOKEN JWT
-        return jsonify({"user_id": result}), 201
+        token = jwt_manager.encode({"id":result})
+        return jsonify(token = token), 201
     
     except KeyError as e:
         return jsonify({"Missing fields":e}), 400
@@ -59,14 +63,30 @@ def login_user():
         if result == None:
             return jsonify({"Message":"No user found"}),400
         else:
-            return jsonify({"Message":"logged"}),200
-        #AGREGAR TOKEN JWT
+            token = jwt_manager.encode({"id":result})
+            return token
     except KeyError as e:
         return jsonify({"Missing fields":e}), 400
+    
+@app.route("/me", methods =["GET"])
+def me():
+    try:
+        token = request.headers.get("Authorization")
+        if token is not None:
+            token = token.replace("Bearer ", "")
+            decoded = jwt_manager.decode(token)
+            user_id = decoded["id"]
+            user = db_manager.get_user_by_id(user_id)
+            return jsonify(id= user_id, username = user[1], role = user[3]) # probar con respecto al return de la BD
+        else:
+            return Response(status=403)
+        
+    except Exception as e:
+        return Response(status=500)
 
 
 
-#CRUD PARA FRUTAS
+#CRUD PARA PRODUCTOS
 
 
 if __name__ == "__main__":
