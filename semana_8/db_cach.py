@@ -16,6 +16,16 @@ users_table = Table(
     schema="cache_schema"
 )
 
+products_table =Table(
+    "products",
+    metadata_obj,
+    Column("id", Integer, primary_key = True),
+    Column("name",String(30)),
+    Column("price", Float),
+    Column("entry_date",Date),
+    Column("quantity", Integer)
+)
+
 class DB_Manager():
     def __init__(self):
         self.engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
@@ -47,7 +57,58 @@ class DB_Manager():
                 return user
             
 
+    #PRODUCTS:
 
+    #Ingresar productos
+    def insert_products(self,name,price,entry_date,quantity):
+        stmt = insert(products_table).values(name=name,price = price, entry_date = entry_date,quantity=quantity).returning(products_table.c.id)
+        with self.engine.connect() as conn:
+            products =conn.execute(stmt)
+            conn.commit()
+            return products.scalar()
+
+    #Obtener todos los productos
+    def get_all_products(self):
+        stmt = select(products_table)
+        with self.engine.connect() as conn:
+            products = conn.execute(stmt)
+            return products.all()
+        
+        if (len(products)==0):
+            return None
+        else:
+            return products
+
+    #Obtener productos por id
+    def get_products_by_id(self, product_id):
+        stmt = select(products_table).where(products_table.c.id == product_id)
+        with self.engine.connect() as conn:
+            result = conn.execute(stmt)
+            product = result.all()
+            if(len(product)==0):
+                return None
+            else:
+                return product[0]
+    #Actualizar productos
+    def update_products(self,product_id,name,price,entry_date,quantity):
+        stmt = update(products_table).where(products_table.c.id == product_id).values(name=name,price=price,entry_date=entry_date,quantity=quantity)
+        with self.engine.connect() as conn:
+            conn.execute(stmt)
+            conn.commit()
+        return True
+
+    # Borrar productos
+    def delete_products(self,product_id):
+        stmt = delete(products_table).where(products_table.c.id==product_id)
+        with self.engine.connect as conn:
+            conn.execute(stmt)
+            conn.commit()
+        return True
+
+
+    #INVOICES
+    #Crear factura
+    
 
             
             
