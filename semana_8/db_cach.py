@@ -26,6 +26,25 @@ products_table =Table(
     Column("quantity", Integer)
 )
 
+invoice_table = Table(
+    "invoice",
+    metadata_obj,
+    Column("id", Integer, primary_key=True),
+    Column("user_id", Integer,ForeignKey("users.id")),
+    Column("date", Date),
+    Column("total_amount", Float)
+)
+
+invoice_detail_table = Table(
+    "invoice_detail",
+    metadata_obj,
+    Column("id",Integer, primary_key=True),
+    Column("invoice_id",Integer, ForeignKey("invoice.id")),
+    Column("product_id",Integer, ForeignKey("products.id")),
+    Column("quantity",Integer),
+    Column("subtotal",Float)
+)
+
 class DB_Manager():
     def __init__(self):
         self.engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
@@ -108,7 +127,70 @@ class DB_Manager():
 
     #INVOICES
     #Crear factura
-    
+    def create_invoice(self,user_id, items):
+        with self.engine.connect() as conn:
+            total = 0
+            inv_details = []
+
+            #verficiar que el producto exista
+            for item in items:
+                prod_id = item["product_id"]
+                qty = item["quantity"]
+
+                prod_smt = select(products_table).where(products_table.c.id==prod_id)
+                product = conn.execute(prod_smt).first()
+
+            if product is None:
+                raise Exception("Product does not exists")
+            elif  product.quantity < qty: #consultar
+                return Exception("Product not available")
+            
+            subtotal = qty*product.price
+            total += subtotal
+
+            inv_details.append({
+                "product_id":prod_id,
+                "quantity": qty,
+                "subtotal": subtotal
+            })
+
+            invoice_stmt = insert(invoice_table).returning(invoice_table.c.id).values(user_id=user_id, date = datetime.now(),total_amount=total)
+            invoice = conn.execute(invoice_stmt)
+            invoice_id = invoice.scalar()
+
+            for detail in inv_details:
+                detail_stmt = insert(invoice_detail_table).values(invoice_id = invoice_id,product_id = detail["product_id"],quantity= detail["quantity"],subtotal = detail["subtotal"])
+                conn.execute(detail_stmt)
+
+                stock_stmt = update(products_table).where(products_table.c.id == detail["product_id"]).values(quantity = products_table.c.quantity-detail["quantity"])
+                conn.execute(stock_stmt)
+
+            conn.commit()
+            return invoice_id
+
+
+    def get_invoice_by_user(self, user_id):
+        stmt = select(invoice_table).where(invoice_table.c.id == user_id)
+        with self.engine.connect() as conn:
+            result  = conn.execute(stmt)
+            return result.all()
+
+    def get_invoice_details(self,invoice_id):
+        stmt = select(invoice_detail_table).where(invoice_detail_table.c.invoice_id == invoice_id)
+        with self.engine.connection() as conn:
+            result = conn.execute(stmt)
+            return result.all()
+        
+    def get_invoice_by_id(self,invoice_id):
+        stmt = select(invoice_table).where(invoice_table.c.id == invoice_id)
+        with self.engine.connection() as conn:
+            result = conn.execute(stmt)
+            return result.first()
+            
+
+
+
+
 
             
             

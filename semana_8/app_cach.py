@@ -2,11 +2,8 @@ from flask import Flask, request, jsonify, Response
 from db_cach import DB_Manager
 from jwt_manager_cach  import JWT_Manager
 
-
-
 db_manager = DB_Manager()
 jwt_manager = DB_Manager()
-
 
 app = Flask("user-service")
 
@@ -22,7 +19,6 @@ def data_validation(data):
 def fields_validation(user_name,password,role):
     if not user_name or not password or not role:
             return jsonify({"error": "Fields cannot be empty"}),400
-
 
 def prod_field_validation(name,price,entry_date,quantity):
     if not name or not price or not entry_date or not quantity:
@@ -107,7 +103,7 @@ def is_admin(user):
 
 
 #**SEPARAR ENDPOINTS ***
-#CRUD PARA PRODUCTOS **ACA VOY
+#CRUD PARA PRODUCTOS
 @app.route("/products" , methods=["POST"])
 def create_products():
     try:
@@ -163,6 +159,96 @@ def get_products_by_id(product_id):
         return jsonify(result),200
     except Exception as e:
         return jsonify({"Error":e}),400
+
+@app.route("products/<int:product_id>" , methods = ["PUT"])
+def update_product(product_id):
+
+    user = get_current_user()
+    if user is None or not is_admin(user):
+        return jsonify({"The user cannot update products"}),403
+    
+    data = request.json
+    data_validation(data)
+    try:
+        db_manager.update_products(
+            product_id,
+            data["name"],
+            data["price"],
+            data["entry_date"],
+            data["quantity"]
+        )
+        return jsonify({f"Product {product_id} updated"}),200
+    except Exception as e:
+        return jsonify({"Error": e}),400
+
+@app.route("products/<int:product_id>", methods = ["DELETE"])
+def delete_product(product_id):
+    user = get_current_user()
+    if user is None or not is_admin(user):
+        return jsonify({"Error": "The user cannot delete products"}),400
+    try:
+        db_manager.delete_products(product_id)
+        return jsonify({"Msg":f"Product {product_id} deleted"})
+    except Exception as e:
+        return jsonify({"Error": e}),400
+
+#Invoice and purchases
+
+@app.route("/buy" , methods = ["POST"])
+def buy_product():
+    user = get_current_user()
+
+    if user is None:
+        return Response(status=400)
+    
+    data = request.json
+
+    try:
+        invoice_id = db_manager.create_invoice(
+            user_id= user[0],
+            items = data["items"]
+        )
+        return jsonify({
+            "Msg":"Purchase succesful",
+            "invoice_id" : invoice_id
+        }),201
+    except Exception as e:
+        return jsonify({"error":str(e)}),400
+
+
+@app.route("/invoices/<int:invoice_id>" , methods = ["GET"])
+def get_invoice_detail(invoice_id):
+    user = get_current_user()
+
+    if user is None:
+        return Response(status=403)
+    
+    details = get_invoice_detail(invoice_id)
+
+    if len(details) == 0:
+        return jsonify({"error":"Invoice not found"}),400
+    
+    invoice_owner = db_manager.get_invoice_by_id(invoice_id)
+
+    if not is_admin(user) and invoice_owner.user_id != user[0]:
+        return Response(status=403)
+    
+    invoice_info = {
+        "invoice_id": details[0].id,
+        "date": str(details[0].date),
+        "total": details[0].total_amount,
+        "items": []
+    }
+
+    for det in details:
+        invoice_info["items"].append({
+            "product_id": det.product_id,
+            "product_name": det.product_name,
+            "quantity": det.quantity,
+            "subtotal": det.subtotal
+        })
+
+    return jsonify(invoice_info)
 
 
 if __name__ == "__main__":
